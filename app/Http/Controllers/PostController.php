@@ -15,54 +15,54 @@ class PostController extends Controller
     {
         $user = Auth::user();
 
-        $followingIds = $user->following()->pluck('users.id');
+        $followingIds = $user->following()->pluck('users.id'); ## Obtener IDs de usuarios que sigue
 
-        $posts = Post::with('user')
-            ->withCount('likes')
-            ->whereIn('user_id', $followingIds->push($user->id))
-            ->latest()
-            ->paginate(10);
+        $posts = Post::with('user') ## Cargar relación con usuario
+            ->withCount('likes') ## Contar likes
+            ->whereIn('user_id', $followingIds->push($user->id))    ## Incluir posts propios
+            ->latest()  ## Ordenar por fecha
+            ->paginate(10); 
 
-        return view('posts.index', compact('posts'));
+        return view('posts.index', compact('posts')); ## Pasar posts a la vista
     }
 
 
 
-    public function store(Request $request)
+    public function store(Request $request) ## Crear nueva publicación
     {
-       $request->validate([
-        'content' => 'required|string|max:500',
-        'image'   => 'nullable|image|max:2048', // 2MB
-    ]);
+        $request->validate([
+            'content' => 'required|string|max:500',
+            'image'   => 'nullable|image|max:2048', // 2MB
+        ]);
+            ##guardar la imagen
+        $path = null;
 
-    $path = null;
+        if ($request->hasFile('image')) {
+            $path = $request->file('image')->store('posts', 'public'); ## Guardar imagen en almacenamiento público
+        }
 
-    if ($request->hasFile('image')) {
-        $path = $request->file('image')->store('posts', 'public');
-    }
+        Post::create([
+            'user_id' => Auth::id(),
+            'content' => $request->content,
+            'image'   => $path,## Ruta de la imagen si existe
+        ]); 
 
-    Post::create([
-        'user_id' => Auth::id(),
-        'content' => $request->content,
-        'image'   => $path,
-    ]);
-
-    return back()->with('success', 'Publicación creada ✅');
+        return back()->with('success', 'Publicación creada ✅');
     }
     public function destroy(Post $post)
-{
-    // Solo el dueño puede borrar
-    if ($post->user_id !== Auth::id()) {
-        abort(403);
+    {
+        // Solo el dueño puede borrar
+        if ($post->user_id !== Auth::id()) {
+            abort(403);
+        }
+
+        // Borrar imagen si existe
+        if ($post->image) {
+            Storage::disk('public')->delete($post->image);
+        }
+
+        $post->delete();
+
+        return back()->with('success', 'Publicación eliminada ✅');
     }
-
-    // Borrar imagen si existe
-    if ($post->image) {
-        Storage::disk('public')->delete($post->image);
-    }
-
-    $post->delete();
-
-    return back()->with('success', 'Publicación eliminada ✅');
-}
 }
