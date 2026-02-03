@@ -2,13 +2,14 @@
 
 namespace App\Http\Controllers;
 
-use App\Http\Requests\ProfileUpdateRequest;
+
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Redirect;
 use Illuminate\View\View;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\DB;
 
 class ProfileController extends Controller
 {
@@ -17,9 +18,12 @@ class ProfileController extends Controller
      */
     public function edit(Request $request): View
     {
-        return view('profile.edit', [
-            'user' => $request->user(),
-        ]);
+        $user = DB::table('users')
+            ->select('id', 'name', 'email', 'bio', 'color_favorito', 'avatar', 'ciudad')
+            ->where('id', Auth::id())
+            ->first();
+
+        return view('profile.edit', compact('user'));
     }
 
     /**
@@ -27,7 +31,7 @@ class ProfileController extends Controller
      */
     public function update(Request $request)
     {
-        $user = $request->user();
+        $user = $request->user(); // ✅ ESTE es el user de la tabla users (Eloquent)
 
         $data = $request->validate([
             'bio' => ['nullable', 'string', 'max:255'],

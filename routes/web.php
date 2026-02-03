@@ -66,5 +66,7 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/usuarios/{user}', [UserController::class, 'show'])->name('users.show')->middleware('auth');
     Route::post('/usuarios/{user}/follow', [FollowController::class, 'follow'])->name('users.follow');
     Route::delete('/usuarios/{user}/follow', [FollowController::class, 'unfollow'])->name('users.unfollow');
+
+    Route::patch('/perfil', [ProfileController::class, 'update'])->name('profile.update');
 });
 require __DIR__.'/auth.php';
